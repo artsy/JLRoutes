@@ -31,7 +31,7 @@ static BOOL shouldDecodePlusSymbols = YES;
 @property (nonatomic, strong) NSString *namespaceKey;
 
 + (void)verboseLogWithFormat:(NSString *)format, ...;
-+ (BOOL)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters;
++ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters;
 - (BOOL)isGlobalRoutesController;
 
 @end
@@ -76,7 +76,7 @@ static BOOL shouldDecodePlusSymbols = YES;
 
 @property (nonatomic, weak) JLRoutes *parentRoutesController;
 @property (nonatomic, strong) NSString *pattern;
-@property (nonatomic, strong) BOOL (^block)(NSDictionary *parameters);
+@property (nonatomic, strong) UIViewController *_Nullable (^block)(NSDictionary *parameters);
 @property (nonatomic, assign) NSUInteger priority;
 @property (nonatomic, strong) NSArray *patternPathComponents;
 
@@ -198,35 +198,18 @@ static BOOL shouldDecodePlusSymbols = YES;
 	return routesController;
 }
 
-
-+ (void)addRoute:(NSString *)routePattern handler:(BOOL (^)(NSDictionary *parameters))handlerBlock {
-	[[self globalRoutes] addRoute:routePattern handler:handlerBlock];
-}
-
-+ (void)addRoutes:(NSArray *)routePatterns handler:(BOOL (^)(NSDictionary *parameters))handlerBlock {
-    for (NSString *routePattern in routePatterns) {
-        [self addRoute:routePattern handler:handlerBlock];
-    }
-}
-
-
-+ (void)addRoute:(NSString *)routePattern priority:(NSUInteger)priority handler:(BOOL (^)(NSDictionary *parameters))handlerBlock {
-	[[self globalRoutes] addRoute:routePattern priority:priority handler:handlerBlock];
-}
-
-
-- (void)addRoute:(NSString *)routePattern handler:(BOOL (^)(NSDictionary *parameters))handlerBlock {
+- (void)addRoute:(NSString *)routePattern handler:(nonnull ARJLRouteHandler)handlerBlock {
 	[self addRoute:routePattern priority:0 handler:handlerBlock];
 }
 
-- (void)addRoutes:(NSArray *)routePatterns handler:(BOOL (^)(NSDictionary *parameters))handlerBlock {
+- (void)addRoutes:(NSArray *)routePatterns handler:(nonnull ARJLRouteHandler)handlerBlock {
     for (NSString *routePattern in routePatterns) {
         [self addRoute:routePattern handler:handlerBlock];
     }
 }
 
 
-- (void)addRoute:(NSString *)routePattern priority:(NSUInteger)priority handler:(BOOL (^)(NSDictionary *parameters))handlerBlock {
+- (void)addRoute:(NSString *)routePattern priority:(NSUInteger)priority handler:(nonnull ARJLRouteHandler)handlerBlock {
 	_JLRoute *route = [[_JLRoute alloc] init];
 	route.pattern = routePattern;
 	route.priority = priority;
@@ -334,11 +317,11 @@ static BOOL shouldDecodePlusSymbols = YES;
 	return [self routeURL:URL withController:routesController parameters:parameters executeBlock:execute];
 }
 
-- (BOOL)routeURL:(NSURL *)URL {
+- (UIViewController *_Nullable)routeURL:(NSURL *)URL {
 	return [[self class] routeURL:URL withController:self];
 }
 
-- (BOOL)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
+- (UIViewController *_Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
 	return [[self class] routeURL:URL withController:self parameters:parameters];
 }
 
@@ -383,17 +366,17 @@ static BOOL shouldDecodePlusSymbols = YES;
 #pragma mark -
 #pragma mark Internal API
 
-+ (BOOL)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController {
++ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController {
     return [self routeURL:URL withController:routesController parameters:nil executeBlock:YES];
 }
 
-+ (BOOL)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters {
++ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters {
     return [self routeURL:URL withController:routesController parameters:parameters executeBlock:YES];
 }
 
-+ (BOOL)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters executeBlock:(BOOL)executeBlock {
++ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters executeBlock:(BOOL)executeBlock {
 	[self verboseLogWithFormat:@"Trying to route URL %@", URL];
-	BOOL didRoute = NO;
+    UIViewController *_Nullable routedVC = nil;
 	NSArray *routes = routesController.routes;
 	NSDictionary *queryParameters = [URL.query JLRoutes_URLParameterDictionary];
 	[self verboseLogWithFormat:@"Parsed query parameters: %@", queryParameters];
@@ -417,7 +400,7 @@ static BOOL shouldDecodePlusSymbols = YES;
 		if (matchParameters) {
 			[self verboseLogWithFormat:@"Successfully matched %@", route];
             if (!executeBlock) {
-                return YES;
+                return nil;
             }
 
 			// add the URL parameters
@@ -434,29 +417,29 @@ static BOOL shouldDecodePlusSymbols = YES;
 			finalParameters[kJLRouteNamespaceKey] = strongParentRoutesController.namespaceKey ?: [NSNull null];
 
 			[self verboseLogWithFormat:@"Final parameters are %@", finalParameters];
-			didRoute = route.block(finalParameters);
-			if (didRoute) {
+			routedVC = route.block(finalParameters);
+			if (routedVC) {
 				break;
 			}
 		}
 	}
 	
-	if (!didRoute) {
+	if (!routedVC) {
 		[self verboseLogWithFormat:@"Could not find a matching route, returning NO"];
 	}
 	
 	// if we couldn't find a match and this routes controller specifies to fallback and its also not the global routes controller, then...
-	if (!didRoute && routesController.shouldFallbackToGlobalRoutes && ![routesController isGlobalRoutesController]) {
+	if (!routedVC && routesController.shouldFallbackToGlobalRoutes && ![routesController isGlobalRoutesController]) {
 		[self verboseLogWithFormat:@"Falling back to global routes..."];
-		didRoute = [self routeURL:URL withController:[self globalRoutes] parameters:parameters executeBlock:executeBlock];
+		routedVC = [self routeURL:URL withController:[self globalRoutes] parameters:parameters executeBlock:executeBlock];
 	}
 	
 	// if, after everything, we did not route anything and we have an unmatched URL handler, then call it
-	if (!didRoute && routesController.unmatchedURLHandler) {
+	if (!routedVC && routesController.unmatchedURLHandler) {
 		routesController.unmatchedURLHandler(routesController, URL, parameters);
 	}
 	
-	return didRoute;
+	return routedVC;
 }
 
 

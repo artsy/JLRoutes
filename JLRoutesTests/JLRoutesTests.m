@@ -45,62 +45,62 @@ static JLRoutesTests *testsInstance = nil;
 @property (strong) NSDictionary *lastMatch;
 
 - (void)route:(NSString *)URLString;
-
 @end
 
 
 @implementation JLRoutesTests
 
-+ (void)setUp {
-    id defaultHandler = [self defaultRouteHandler];
-	
-	[JLRoutes setVerboseLoggingEnabled:YES];
-	
-	// used in testBasicRouting
-	[JLRoutes addRoute:@"/test" handler:defaultHandler];
-	[JLRoutes addRoute:@"/user/view/:userID" handler:defaultHandler];
-	[JLRoutes addRoute:@"/:object/:action/:primaryKey" handler:defaultHandler];
-	[JLRoutes addRoute:@"/" handler:defaultHandler];
-	[JLRoutes addRoute:@"/:" handler:defaultHandler];
-	[JLRoutes addRoute:@"/interleaving/:param1/foo/:param2" handler:defaultHandler];
-	[JLRoutes addRoute:@"/xyz/wildcard/*" handler:defaultHandler];
-	[JLRoutes addRoute:@"/route/:param/*" handler:defaultHandler];
-    
-    // used in testMultiple
-    [JLRoutes addRoutes:@[@"/multiple1", @"/multiple2"] handler:defaultHandler];
-	
-	// used in testPriority
-	[JLRoutes addRoute:@"/test/priority/:level" handler:defaultHandler];
-	[JLRoutes addRoute:@"/test/priority/high" priority:20 handler:defaultHandler];
-	
-	// used in testBlockReturnValue
-	[JLRoutes addRoute:@"/return/:value" handler:^BOOL(NSDictionary *parameters) {
-		testsInstance.lastMatch = parameters;
-		NSString *value = parameters[@"value"];
-		return [value isEqualToString:@"yes"];
-	}];
-	
-	// used in testNamespaces
-	[[JLRoutes routesForScheme:@"namespaceTest1"] addRoute:@"/test" handler:defaultHandler];
-	[[JLRoutes routesForScheme:@"namespaceTest2"] addRoute:@"/test" handler:defaultHandler];
-	[JLRoutes routesForScheme:@"namespaceTest2"].shouldFallbackToGlobalRoutes = YES;
-	
-	// used in testRouteRemoval
-	[[JLRoutes routesForScheme:@"namespaceTest3"] addRoute:@"/test1" handler:defaultHandler];
-	[[JLRoutes routesForScheme:@"namespaceTest3"] addRoute:@"/test2" handler:defaultHandler];
-	
-	NSLog(@"%@", [JLRoutes description]);
-	
-	[super setUp];
-}
+static JLRoutes *router;
 
 - (void)setUp {
 	testsInstance = self;
-	[super setUp];
+    id defaultHandler = [self.class defaultRouteHandler];
+
+    [JLRoutes setVerboseLoggingEnabled:YES];
+
+    // used in testBasicRouting
+    router = [[JLRoutes alloc] init];
+
+    [router addRoute:@"/test" handler:defaultHandler];
+    [router addRoute:@"/user/view/:userID" handler:defaultHandler];
+    [router addRoute:@"/:object/:action/:primaryKey" handler:defaultHandler];
+    [router addRoute:@"/" handler:defaultHandler];
+    [router addRoute:@"/:" handler:defaultHandler];
+    [router addRoute:@"/interleaving/:param1/foo/:param2" handler:defaultHandler];
+    [router addRoute:@"/xyz/wildcard/*" handler:defaultHandler];
+    [router addRoute:@"/route/:param/*" handler:defaultHandler];
+
+    // used in testMultiple
+    [router addRoutes:@[@"/multiple1", @"/multiple2"] handler:defaultHandler];
+
+    // used in testPriority
+    [router addRoute:@"/test/priority/:level" handler:defaultHandler];
+    [router addRoute:@"/test/priority/high" priority:20 handler:defaultHandler];
+
+    // used in testBlockReturnValue
+    [router addRoute:@"/return/:value" handler:^UIViewController * _Nullable (NSDictionary * _Nullable parameters) {
+
+        testsInstance.lastMatch = parameters;
+//        NSString *value = parameters[@"value"];
+        //		return [value isEqualToString:@"yes"];
+        return nil;
+    }];
+
+    // used in testNamespaces
+    [[JLRoutes routesForScheme:@"namespaceTest1"] addRoute:@"/test" handler:defaultHandler];
+    [[JLRoutes routesForScheme:@"namespaceTest2"] addRoute:@"/test" handler:defaultHandler];
+    [JLRoutes routesForScheme:@"namespaceTest2"].shouldFallbackToGlobalRoutes = YES;
+
+    // used in testRouteRemoval
+    [[JLRoutes routesForScheme:@"namespaceTest3"] addRoute:@"/test1" handler:defaultHandler];
+    [[JLRoutes routesForScheme:@"namespaceTest3"] addRoute:@"/test2" handler:defaultHandler];
+    
+    NSLog(@"%@", [router description]);
+    
+    [super setUp];
 }
 
 - (void)testBasicRouting {
-	[self route:nil];
 	JLValidateNoLastMatch();
 	
 	[self route:@"tests:/"];
@@ -289,8 +289,8 @@ static JLRoutesTests *testsInstance = nil;
     NSURL *shouldHaveRouteURL = [NSURL URLWithString:@"tests:/test"];
     NSURL *shouldNotHaveRouteURL = [NSURL URLWithString:@"tests:/dfjkbsdkjfbskjdfb/sdasd"];
 
-    XCTAssertTrue([JLRoutes canRouteURL:shouldHaveRouteURL], @"Should state it can route known URL");
-    XCTAssertFalse([JLRoutes canRouteURL:shouldNotHaveRouteURL], @"Should not state it can route unknown URL");
+    XCTAssertTrue([router canRouteURL:shouldHaveRouteURL], @"Should state it can route known URL");
+    XCTAssertFalse([router canRouteURL:shouldNotHaveRouteURL], @"Should not state it can route unknown URL");
 }
 
 - (void)testSubscripting {
@@ -301,13 +301,13 @@ static JLRoutesTests *testsInstance = nil;
 
   NSURL *shouldHaveRouteURL = [NSURL URLWithString:@"subscripting"];
 
-  XCTAssertTrue([JLRoutes canRouteURL:shouldHaveRouteURL], @"Should state it can route known URL");
+  XCTAssertTrue([router canRouteURL:shouldHaveRouteURL], @"Should state it can route known URL");
 }
 
 - (void)testNonSingletonUsage {
     JLRoutes *routes = [JLRoutes new];
     NSURL *trivialURL = [NSURL URLWithString:@"/success"];
-    [routes addRoute:[trivialURL absoluteString] handler:nil];
+    [routes addRoute:[trivialURL absoluteString] handler:[self.class nilRouteHandler]];
     XCTAssertTrue([routes routeURL:trivialURL], @"Non-singleton instance should route known URL");
 }
 
@@ -433,7 +433,8 @@ static JLRoutesTests *testsInstance = nil;
 }
 
 - (void) testVariableEmptyFollowedByWildcard {
-    [[JLRoutes routesForScheme:@"wildcardTests"] addRoute:@"list/:variable/detail/:variable2/*" handler:nil];
+    [[JLRoutes routesForScheme:@"wildcardTests"] addRoute:@"list/:variable/detail/:variable2/*" handler:[self.class nilRouteHandler]];
+    
     [self route:@"wildcardTests://list/variable/detail/"];
     JLValidateAnyRouteMatched();
 }
@@ -441,12 +442,20 @@ static JLRoutesTests *testsInstance = nil;
 #pragma mark -
 #pragma mark Convenience Methods
 
-+ (BOOL (^)(NSDictionary *))defaultRouteHandler {
-    return ^BOOL (NSDictionary *params) {
++ (UIViewController *_Nullable (^)(NSDictionary *))defaultRouteHandler {
+    return ^UIViewController *_Nullable (NSDictionary *params) {
         testsInstance.lastMatch = params;
-        return YES;
+        return [[UIViewController alloc] init];
     };
 }
+
++ (UIViewController *_Nullable (^)(NSDictionary *))nilRouteHandler {
+    return ^UIViewController *_Nullable (NSDictionary *params) {
+        testsInstance.lastMatch = params;
+        return [[UIViewController alloc] init];
+    };
+}
+
 
 - (void)route:(NSString *)URLString {
 	[self route:URLString withParameters:nil];
@@ -461,7 +470,7 @@ static JLRoutesTests *testsInstance = nil;
 - (void)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
     NSLog(@"*** Routing %@", URL);
 	self.lastMatch = nil;
-	self.didRoute = [JLRoutes routeURL:URL withParameters:parameters];
+	self.didRoute = [router routeURL:URL withParameters:parameters] != nil;
 }
 
 

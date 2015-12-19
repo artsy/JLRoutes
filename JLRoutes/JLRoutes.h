@@ -11,13 +11,17 @@
  */
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXTERN NSString *const kJLRoutePatternKey;
 FOUNDATION_EXTERN NSString *const kJLRouteURLKey;
 FOUNDATION_EXTERN NSString *const kJLRouteNamespaceKey;
 FOUNDATION_EXTERN NSString *const kJLRouteWildcardComponentsKey;
 FOUNDATION_EXTERN NSString *const kJLRoutesGlobalNamespaceKey;
+
+typedef UIViewController * _Nullable (^ARJLRouteHandler)(NSDictionary * _Nullable parameters);
 
 
 @interface JLRoutes : NSObject
@@ -28,28 +32,20 @@ FOUNDATION_EXTERN NSString *const kJLRoutesGlobalNamespaceKey;
 /// Returns the global routing namespace (this is used by the +addRoute methods by default)
 + (instancetype)globalRoutes;
 
-/// Returns a routing namespace for the given scheme
-+ (instancetype)routesForScheme:(NSString *)scheme;
-
 /// Tells JLRoutes that it should manually replace '+' in parsed values to ' '. Defaults to YES.
 + (void)setShouldDecodePlusSymbols:(BOOL)shouldDeecode;
 + (BOOL)shouldDecodePlusSymbols;
 
 /// Registers a routePattern with default priority (0) in the receiving scheme namespace.
-+ (void)addRoute:(NSString *)routePattern handler:(BOOL (^)(NSDictionary *parameters))handlerBlock;
-- (void)addRoute:(NSString *)routePattern handler:(BOOL (^)(NSDictionary *parameters))handlerBlock; // instance method
+- (void)addRoute:(NSString *)routePattern handler:(ARJLRouteHandler)handlerBlock; // instance method
 
 /// Registers multiple routePatterns for one handler with default priority (0) in the receiving scheme namespace.
-+ (void)addRoutes:(NSArray *)routePatterns handler:(BOOL (^)(NSDictionary *parameters))handlerBlock;
-- (void)addRoutes:(NSArray *)routePatterns handler:(BOOL (^)(NSDictionary *parameters))handlerBlock; // instance method
-
+- (void)addRoutes:(NSArray *)routePatterns handler:(ARJLRouteHandler)handlerBlock; // instance method
 
 /// Removes a routePattern from the receiving scheme namespace.
-+ (void)removeRoute:(NSString *)routePattern;
 - (void)removeRoute:(NSString *)routePattern; // instance method
 
 /// Removes all routes from the receiving scheme namespace.
-+ (void)removeAllRoutes;
 - (void)removeAllRoutes; // instance method
 
 /// Unregister and delete an entire scheme namespace
@@ -59,22 +55,17 @@ FOUNDATION_EXTERN NSString *const kJLRoutesGlobalNamespaceKey;
 - (void)setObject:(id)handlerBlock forKeyedSubscript:(NSString *)routePatten;
 
 /// Registers a routePattern in the global scheme namespace with a handlerBlock to call when the route pattern is matched by a URL.
-/// The block returns a BOOL representing if the handlerBlock actually handled the route or not. If
+/// The block returns a UIViewController if the handlerBlock actually handled the route or not. If
 /// a block returns NO, JLRoutes will continue trying to find a matching route.
-+ (void)addRoute:(NSString *)routePattern priority:(NSUInteger)priority handler:(BOOL (^)(NSDictionary *parameters))handlerBlock;
-- (void)addRoute:(NSString *)routePattern priority:(NSUInteger)priority handler:(BOOL (^)(NSDictionary *parameters))handlerBlock; // instance method
+- (void)addRoute:(NSString *)routePattern priority:(NSUInteger)priority handler:(ARJLRouteHandler)handlerBlock; // instance method
+
++ (instancetype)routesForScheme:(NSString *)scheme;
 
 /// Routes a URL, calling handler blocks (for patterns that match URL) until one returns YES, optionally specifying add'l parameters
-+ (BOOL)routeURL:(NSURL *)URL;
-+ (BOOL)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters;
-
-- (BOOL)routeURL:(NSURL *)URL; // instance method
-- (BOOL)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
+- (UIViewController *_Nullable)routeURL:(NSURL *)URL; // instance method
+- (UIViewController *_Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
 
 /// Returns whether a route exists for a URL
-+ (BOOL)canRouteURL:(NSURL *)URL;
-+ (BOOL)canRouteURL:(NSURL *)URL withParameters:(NSDictionary *)parameters;
-
 - (BOOL)canRouteURL:(NSURL *)URL; // instance method
 - (BOOL)canRouteURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
 
@@ -92,3 +83,5 @@ FOUNDATION_EXTERN NSString *const kJLRoutesGlobalNamespaceKey;
 @property (nonatomic, copy) void (^unmatchedURLHandler)(JLRoutes *routes, NSURL *URL, NSDictionary *parameters);
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -23,8 +23,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/joeldev/JLRoutes.git", :tag => "1.5.3" }
 
   s.source_files = 'JLRoutes', 'JLRoutes/*.{h,m}'
-  s.framework  = 'Foundation'
+  s.frameworks  = ['Foundation', 'UIKit']
   s.requires_arc = true
   s.ios.deployment_target = '5.0'
-  s.osx.deployment_target = '10.7'
 end
