@@ -31,7 +31,7 @@ static BOOL shouldDecodePlusSymbols = YES;
 @property (nonatomic, strong) NSString *namespaceKey;
 
 + (void)verboseLogWithFormat:(NSString *)format, ...;
-+ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters;
++ (id _Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters;
 - (BOOL)isGlobalRoutesController;
 
 @end
@@ -76,7 +76,7 @@ static BOOL shouldDecodePlusSymbols = YES;
 
 @property (nonatomic, weak) JLRoutes *parentRoutesController;
 @property (nonatomic, strong) NSString *pattern;
-@property (nonatomic, strong) UIViewController *_Nullable (^block)(NSDictionary *parameters);
+@property (nonatomic, strong) id _Nullable (^block)(NSDictionary *parameters);
 @property (nonatomic, assign) NSUInteger priority;
 @property (nonatomic, strong) NSArray *patternPathComponents;
 
@@ -289,11 +289,11 @@ static BOOL shouldDecodePlusSymbols = YES;
 }
 
 
-+ (BOOL)routeURL:(NSURL *)URL {
++ (UIViewController *)routeURL:(NSURL *)URL {
 	return [self routeURL:URL withParameters:nil executeRouteBlock:YES];
 }
 
-+ (BOOL)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
++ (UIViewController *)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
     return [self routeURL:URL withParameters:parameters executeRouteBlock:YES];
 }
 
@@ -306,7 +306,7 @@ static BOOL shouldDecodePlusSymbols = YES;
     return [self routeURL:URL withParameters:parameters executeRouteBlock:NO];
 }
 
-+ (BOOL)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters executeRouteBlock:(BOOL)execute {
++ (UIViewController *)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters executeRouteBlock:(BOOL)execute {
 	if (!URL) {
 		return NO;
 	}
@@ -317,11 +317,11 @@ static BOOL shouldDecodePlusSymbols = YES;
 	return [self routeURL:URL withController:routesController parameters:parameters executeBlock:execute];
 }
 
-- (UIViewController *_Nullable)routeURL:(NSURL *)URL {
+- (id _Nullable)routeURL:(NSURL *)URL {
 	return [[self class] routeURL:URL withController:self];
 }
 
-- (UIViewController *_Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
+- (id _Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
 	return [[self class] routeURL:URL withController:self parameters:parameters];
 }
 
@@ -366,17 +366,17 @@ static BOOL shouldDecodePlusSymbols = YES;
 #pragma mark -
 #pragma mark Internal API
 
-+ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController {
++ (id _Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController {
     return [self routeURL:URL withController:routesController parameters:nil executeBlock:YES];
 }
 
-+ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters {
++ (id _Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters {
     return [self routeURL:URL withController:routesController parameters:parameters executeBlock:YES];
 }
 
-+ (UIViewController *_Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters executeBlock:(BOOL)executeBlock {
++ (id _Nullable)routeURL:(NSURL *)URL withController:(JLRoutes *)routesController parameters:(NSDictionary *)parameters executeBlock:(BOOL)executeBlock {
 	[self verboseLogWithFormat:@"Trying to route URL %@", URL];
-    UIViewController *_Nullable routedVC = nil;
+    id _Nullable routedVC = nil;
 	NSArray *routes = routesController.routes;
 	NSDictionary *queryParameters = [URL.query JLRoutes_URLParameterDictionary];
 	[self verboseLogWithFormat:@"Parsed query parameters: %@", queryParameters];
@@ -400,7 +400,7 @@ static BOOL shouldDecodePlusSymbols = YES;
 		if (matchParameters) {
 			[self verboseLogWithFormat:@"Successfully matched %@", route];
             if (!executeBlock) {
-                return nil;
+                return @(YES);
             }
 
 			// add the URL parameters

@@ -59,7 +59,7 @@ static JLRoutes *router;
     [JLRoutes setVerboseLoggingEnabled:YES];
 
     // used in testBasicRouting
-    router = [[JLRoutes alloc] init];
+    router = [JLRoutes routesForScheme:kJLRoutesGlobalNamespaceKey];
 
     [router addRoute:@"/test" handler:defaultHandler];
     [router addRoute:@"/user/view/:userID" handler:defaultHandler];
@@ -81,8 +81,9 @@ static JLRoutes *router;
     [router addRoute:@"/return/:value" handler:^UIViewController * _Nullable (NSDictionary * _Nullable parameters) {
 
         testsInstance.lastMatch = parameters;
-//        NSString *value = parameters[@"value"];
-        //		return [value isEqualToString:@"yes"];
+        if ([parameters[@"value"] boolValue]) {
+            return [[UIViewController alloc] init];
+        }
         return nil;
     }];
 
@@ -229,6 +230,8 @@ static JLRoutes *router;
 	JLValidatePattern(@"/test/priority/high");
     
     // test for adding only routes with non-zero priority (https://github.com/joeldev/JLRoutes/issues/46)
+    id thing = [JLRoutes routesForScheme:@"priorityTest"];
+
     [[JLRoutes routesForScheme:@"priorityTest"] addRoute:@"/:foo/bar/:baz" priority:20 handler:[[self class] defaultRouteHandler]];
     [[JLRoutes routesForScheme:@"priorityTest"] addRoute:@"/:foo/things/:baz" priority:10 handler:[[self class] defaultRouteHandler]];
     [[JLRoutes routesForScheme:@"priorityTest"] addRoute:@"/:foo/:baz" priority:1 handler:[[self class] defaultRouteHandler]];
@@ -249,7 +252,7 @@ static JLRoutes *router;
 	// even though this matches a route, the block returns NO here so there won't be a valid match
 	[self route:@"tests://return/no"];
 	JLValidateNoLastMatch();
-	
+
 	// this one is the same route but will return yes, causing it to be flagged as a match
 	[self route:@"tests://return/yes"];
 	JLValidateAnyRouteMatched();
@@ -318,7 +321,7 @@ static JLRoutes *router;
 	[[JLRoutes routesForScheme:@"namespaceTest3"] removeRoute:@"test1"];
 	[self route:@"namespaceTest3://test1"];
 	JLValidateNoLastMatch();
-	
+
 	[self route:@"namespaceTest3://test2"];
 	JLValidateAnyRouteMatched();
 	JLValidateScheme(@"namespaceTest3");
@@ -442,15 +445,15 @@ static JLRoutes *router;
 #pragma mark -
 #pragma mark Convenience Methods
 
-+ (UIViewController *_Nullable (^)(NSDictionary *))defaultRouteHandler {
-    return ^UIViewController *_Nullable (NSDictionary *params) {
++ (id _Nullable (^)(NSDictionary *))defaultRouteHandler {
+    return ^id _Nullable (NSDictionary *params) {
         testsInstance.lastMatch = params;
         return [[UIViewController alloc] init];
     };
 }
 
-+ (UIViewController *_Nullable (^)(NSDictionary *))nilRouteHandler {
-    return ^UIViewController *_Nullable (NSDictionary *params) {
++ (id _Nullable (^)(NSDictionary *))nilRouteHandler {
+    return ^id _Nullable (NSDictionary *params) {
         testsInstance.lastMatch = params;
         return [[UIViewController alloc] init];
     };
@@ -470,7 +473,8 @@ static JLRoutes *router;
 - (void)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
     NSLog(@"*** Routing %@", URL);
 	self.lastMatch = nil;
-	self.didRoute = [router routeURL:URL withParameters:parameters] != nil;
+	self.didRoute = [JLRoutes routeURL:URL withParameters:parameters] != nil;
+
 }
 
 

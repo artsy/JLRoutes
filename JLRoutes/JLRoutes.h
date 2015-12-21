@@ -62,12 +62,15 @@ typedef UIViewController * _Nullable (^ARJLRouteHandler)(NSDictionary * _Nullabl
 + (instancetype)routesForScheme:(NSString *)scheme;
 
 /// Routes a URL, calling handler blocks (for patterns that match URL) until one returns YES, optionally specifying add'l parameters
-- (UIViewController *_Nullable)routeURL:(NSURL *)URL; // instance method
-- (UIViewController *_Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
+- (id _Nullable)routeURL:(NSURL *)URL; // instance method
+- (id _Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
 
 /// Returns whether a route exists for a URL
 - (BOOL)canRouteURL:(NSURL *)URL; // instance method
 - (BOOL)canRouteURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
+
++ (UIViewController *)routeURL:(NSURL *)URL;
++ (UIViewController *)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters;
 
 /// Prints the entire routing table
 + (NSString *)description;
