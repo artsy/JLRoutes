@@ -20,7 +20,7 @@ FOUNDATION_EXTERN NSString *const kJLRouteNamespaceKey;
 FOUNDATION_EXTERN NSString *const kJLRouteWildcardComponentsKey;
 FOUNDATION_EXTERN NSString *const kJLRoutesGlobalNamespaceKey;
 
-typedef UIViewController * _Nullable (^ARJLRouteHandler)(NSDictionary * _Nullable parameters);
+typedef id _Nullable (^ARJLRouteHandler)(NSDictionary * _Nullable parameters);
 
 
 @interface JLRoutes : NSObject
@@ -68,8 +68,8 @@ typedef UIViewController * _Nullable (^ARJLRouteHandler)(NSDictionary * _Nullabl
 - (BOOL)canRouteURL:(NSURL *)URL; // instance method
 - (BOOL)canRouteURL:(NSURL *)URL withParameters:(NSDictionary *)parameters; // instance method
 
-+ (UIViewController *)routeURL:(NSURL *)URL;
-+ (UIViewController *)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters;
++ (id _Nullable)routeURL:(NSURL *)URL;
++ (id _Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters;
 
 /// Prints the entire routing table
 + (NSString *)description;

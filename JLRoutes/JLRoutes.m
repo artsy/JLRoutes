@@ -289,11 +289,11 @@ static BOOL shouldDecodePlusSymbols = YES;
 }
 
 
-+ (UIViewController *)routeURL:(NSURL *)URL {
++ (id _Nullable)routeURL:(NSURL *)URL {
 	return [self routeURL:URL withParameters:nil executeRouteBlock:YES];
 }
 
-+ (UIViewController *)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
++ (id _Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters {
     return [self routeURL:URL withParameters:parameters executeRouteBlock:YES];
 }
 
@@ -306,7 +306,7 @@ static BOOL shouldDecodePlusSymbols = YES;
     return [self routeURL:URL withParameters:parameters executeRouteBlock:NO];
 }
 
-+ (UIViewController *)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters executeRouteBlock:(BOOL)execute {
++ (id _Nullable)routeURL:(NSURL *)URL withParameters:(NSDictionary *)parameters executeRouteBlock:(BOOL)execute {
 	if (!URL) {
 		return NO;
 	}
