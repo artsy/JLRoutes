@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "JLRoutes"
-  s.version      = "1.5.3"
+  s.version      = "2.0.0"
   s.summary      = "URL routing library for iOS with a simple block-based API."
   s.homepage     = "https://github.com/joeldev/JLRoutes"
 
@@ -26,4 +26,5 @@ Pod::Spec.new do |s|
   s.frameworks  = ['Foundation', 'UIKit']
   s.requires_arc = true
   s.ios.deployment_target = '5.0'
+  s.osx.deployment_target = '10.7'
 end

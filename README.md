@@ -11,7 +11,6 @@ JLRoutes is advanced URL parsing with a block-based callback API. It is designed
 Artsy wanted to have a version of JLRoutes that:
 * Returns optional `id`s instead of BOOLs when routing
 * Reduces the scope for the class based API
-* Supports a hierarchy of routing objects
 
 As well as all the awesome stuff below.
 
